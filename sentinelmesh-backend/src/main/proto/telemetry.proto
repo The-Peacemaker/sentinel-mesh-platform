@@ -26,3 +26,4 @@ message AnomalyResponse {
   string incidentId = 2;
   string mitigationAction = 3;
 }
+
