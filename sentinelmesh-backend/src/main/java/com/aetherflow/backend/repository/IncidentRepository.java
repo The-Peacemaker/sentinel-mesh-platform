@@ -11,4 +11,5 @@ import java.util.Optional;
 public interface IncidentRepository extends JpaRepository<Incident, Long> {
     Optional<Incident> findFirstByHostAndStatusOrderByIdDesc(String host, String status);
     List<Incident> findTop50ByOrderByIdDesc();
+    Optional<Incident> findByIncidentUuid(String incidentUuid);
 }

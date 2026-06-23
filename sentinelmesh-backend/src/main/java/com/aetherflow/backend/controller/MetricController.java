@@ -29,6 +29,28 @@ public class MetricController {
     private final AnomalyRepository anomalyRepository;
     private final IncidentRepository incidentRepository;
     private final MitigationActionRepository mitigationActionRepository;
+    private final com.aetherflow.backend.service.MitigationService mitigationService;
+
+    @PostMapping("/incidents/{uuid}/mitigate")
+    public Map<String, Object> triggerMitigation(@PathVariable String uuid) {
+        log.info("REST trigger mitigation for incident: {}", uuid);
+        Map<String, Object> response = new HashMap<>();
+        Incident incident = incidentRepository.findByIncidentUuid(uuid).orElse(null);
+        if (incident == null) {
+            response.put("status", "ERROR");
+            response.put("message", "Incident not found");
+            return response;
+        }
+        if ("RESOLVED".equals(incident.getStatus()) || "MITIGATING".equals(incident.getStatus())) {
+            response.put("status", "IGNORED");
+            response.put("message", "Incident is already in status " + incident.getStatus());
+            return response;
+        }
+        mitigationService.triggerMitigation(incident);
+        response.put("status", "TRIGGERED");
+        response.put("message", "Mitigation workflow asynchronously triggered");
+        return response;
+    }
 
     @GetMapping("/recent-telemetry")
     public List<TelemetryEvent> getRecentTelemetry() {

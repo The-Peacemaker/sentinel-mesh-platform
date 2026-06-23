@@ -29,13 +29,8 @@ public class TelemetryConsumer {
             // Parse message
             TelemetryEvent event = objectMapper.readValue(message, TelemetryEvent.class);
             
-            // If timestamp is not set, set it
-            if (event.getTimestamp() == null) {
-                event.setTimestamp(Instant.now());
-            }
-            if (event.getReceivedAt() == null) {
-                event.setReceivedAt(Instant.now());
-            }
+            event.setTimestamp(Instant.now());
+            event.setReceivedAt(Instant.now());
 
             // Save to Database
             TelemetryEvent savedEvent = telemetryEventRepository.save(event);

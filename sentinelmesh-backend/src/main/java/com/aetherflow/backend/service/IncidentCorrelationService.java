@@ -24,7 +24,7 @@ public class IncidentCorrelationService {
     private final SseBroadcaster sseBroadcaster;
 
     @Transactional
-    public void correlateAnomaly(Anomaly newAnomaly) {
+    public Incident correlateAnomaly(Anomaly newAnomaly) {
         String host = newAnomaly.getHost();
         log.info("Correlating anomaly for host: {} (Risk: {})", host, newAnomaly.getRiskScore());
 
@@ -44,7 +44,7 @@ public class IncidentCorrelationService {
                 incidentRepository.save(activeIncident);
             }
             sseBroadcaster.broadcast("incident", activeIncident);
-            return;
+            return null;
         }
 
         // 2. Fetch unassociated anomalies in the last 1 minute
@@ -101,12 +101,11 @@ public class IncidentCorrelationService {
             }
 
             sseBroadcaster.broadcast("incident", savedIncident);
-
-            // Trigger Mitigation Engine
-            mitigationService.triggerMitigation(savedIncident);
+            return savedIncident;
         } else {
             // Keep anomaly unassociated, just save it
             anomalyRepository.save(newAnomaly);
+            return null;
         }
     }
 }

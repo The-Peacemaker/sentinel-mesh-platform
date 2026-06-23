@@ -125,7 +125,7 @@ def run_ai_engine():
             print(f"[Host: {host}] - ML Prediction: {'ANOMALY' if prediction == -1 else 'NORMAL'}, Risk Score: {risk_score:.2f}, Reason: {reason}")
 
             if is_anomaly:
-                print(f"🔥 Flagged Anomaly! Initiating gRPC Incident Alert to {BACKEND_GRPC_SERVER}...")
+                print(f"[ALERT] Flagged Anomaly! Initiating gRPC Incident Alert to {BACKEND_GRPC_SERVER}...")
                 try:
                     request = telemetry_pb2.AnomalyRequest(
                         host=host,
@@ -139,9 +139,9 @@ def run_ai_engine():
                         networkPackets=network_packets
                     )
                     response = grpc_stub.ReportAnomaly(request, timeout=3.0)
-                    print(f"✅ Alert Received by Backend. Status: {response.status}, Action: {response.mitigationAction}")
+                    print(f"[SUCCESS] Alert Received by Backend. Status: {response.status}, Action: {response.mitigationAction}")
                 except grpc.RpcError as e:
-                    print(f"❌ Failed to send gRPC alert: {e.code()} - {e.details()}")
+                    print(f"[ERROR] Failed to send gRPC alert: {e.code()} - {e.details()}")
 
         except Exception as e:
             print(f"Error processing telemetry event: {e}")
