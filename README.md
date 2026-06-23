@@ -585,6 +585,3 @@ When presenting this project in a placement interview, articulate these architec
 *"The project that separates a college student from a production engineer."*
 
 </div>
-
-
- 
