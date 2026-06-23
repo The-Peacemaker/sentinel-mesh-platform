@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package telemetry;
+
+option java_multiple_files = true;
+option java_package = "com.aetherflow.backend.grpc";
+
+service AnomalyService {
+  rpc ReportAnomaly (AnomalyRequest) returns (AnomalyResponse);
+}
+
+message AnomalyRequest {
+  string host = 1;
+  double riskScore = 2;
+  string reason = 3;
+  int64 eventTimestamp = 4;
+  double cpu = 5;
+  double memory = 6;
+  double responseTime = 7;
+  int32 failedLogins = 8;
+  int64 networkPackets = 9;
+}
+
+message AnomalyResponse {
+  string status = 1;
+  string incidentId = 2;
+  string mitigationAction = 3;
+}

@@ -1,0 +1,46 @@
+# Maven configuration
+**/target/
+**/.mvn/
+**/maven-wrapper.properties
+
+# Local Maven Installation
+/maven/
+
+# IDEs and Editors
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.classpath
+.project
+.settings/
+.factorypath
+bin/
+
+# Python caching and environments
+**/__pycache__/
+**/*.py[cod]
+**/*$py.class
+**/venv/
+**/env/
+**/.env
+**/.venv
+**/pip-log.txt
+**/pip-delete-this-directory.txt
+**/.poetry/
+**/.pytest_cache/
+**/.mypy_cache/
+
+# Auto-generated Protobuf stubs (if regenerated during builds)
+# **/*_pb2.py
+# **/*_pb2_grpc.py
+
+# Models & binaries
+# **/isolation_forest.pkl
+
+# System and Temp logs
+**/*.log
+**/logs/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SentinelMesh // Autonomous Security & Monitoring</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <i class="fa-solid fa-shield-halved brand-logo"></i>
+                <div class="brand-text">
+                    <h1>SENTINEL<span>MESH</span></h1>
+                    <span class="sub-brand">AI MONITORING & RESPONSE</span>
+                </div>
+            </div>
+            <nav class="nav-menu">
+                <a href="#" class="nav-item active" data-tab="dashboard">
+                    <i class="fa-solid fa-chart-line"></i> Dashboard
+                </a>
+                <a href="#" class="nav-item" data-tab="hosts">
+                    <i class="fa-solid fa-server"></i> Host Topology
+                </a>
+                <a href="#" class="nav-item" data-tab="incidents">
+                    <i class="fa-solid fa-shield-halved"></i> Incident Feed
+                    <span class="badge" id="active-incidents-badge" style="display:none;">0</span>
+                </a>
+                <a href="#" class="nav-item" data-tab="simulator">
+                    <i class="fa-solid fa-terminal"></i> Attack Simulator
+                </a>
+            </nav>
+            <div class="connection-status">
+                <span class="status-indicator online" id="stream-indicator"></span>
+                <span id="stream-text">SSE Stream Offline</span>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="top-header">
+                <div class="header-title">
+                    <h2 id="tab-title">System Dashboard</h2>
+                    <p class="text-muted" id="tab-subtitle">Real-time ML-driven telemetry overview</p>
+                </div>
+                <div class="system-time">
+                    <i class="fa-regular fa-clock"></i>
+                    <span id="clock">00:00:00 UTC</span>
+                </div>
+            </header>
+
+            <!-- TAB: Dashboard -->
+            <section class="tab-pane active" id="tab-dashboard">
+                <!-- Live Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-label">Total Events Processed</span>
+                            <i class="fa-solid fa-list-check stat-icon purple"></i>
+                        </div>
+                        <div class="stat-value" id="stat-total-events">0</div>
+                        <div class="stat-footer">
+                            <span class="trend positive"><i class="fa-solid fa-wave-square"></i> Real-time ingest active</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-label">Flagged Anomalies</span>
+                            <i class="fa-solid fa-triangle-exclamation stat-icon yellow"></i>
+                        </div>
+                        <div class="stat-value" id="stat-anomalies">0</div>
+                        <div class="stat-footer">
+                            <span class="text-muted">Ingested from Python ML</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-label">Active Incidents</span>
+                            <i class="fa-solid fa-circle-exclamation stat-icon red"></i>
+                        </div>
+                        <div class="stat-value" id="stat-active-incidents">0</div>
+                        <div class="stat-footer">
+                            <span class="text-muted" id="stat-incidents-summary">0 resolved automatically</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-label">Mitigation Success Rate</span>
+                            <i class="fa-solid fa-circle-check stat-icon green"></i>
+                        </div>
+                        <div class="stat-value" id="stat-mitigation-rate">100%</div>
+                        <div class="stat-footer">
+                            <span class="trend positive"><i class="fa-solid fa-arrow-up"></i> Auto-remediation online</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Charts Section -->
+                <div class="dashboard-charts">
+                    <div class="chart-card double-width">
+                        <div class="card-header">
+                            <h3>Live Infrastructure Telemetry (CPU & Memory)</h3>
+                            <div class="chart-legend">
+                                <span class="legend-item"><span class="legend-color cpu"></span> CPU</span>
+                                <span class="legend-item"><span class="legend-color mem"></span> Memory</span>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="telemetryChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="card-header">
+                            <h3>Aggregated Risk Level</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="riskChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Events & Logs -->
+                <div class="logs-container">
+                    <div class="logs-card">
+                        <div class="card-header">
+                            <h3>Live Security Events Log</h3>
+                            <button class="btn btn-sm btn-outline" id="clear-logs">Clear View</button>
+                        </div>
+                        <div class="log-entries" id="live-logs-feed">
+                            <div class="log-placeholder">Waiting for telemetry stream...</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB: Hosts -->
+            <section class="tab-pane" id="tab-hosts">
+                <div class="hosts-overview-container">
+                    <div class="host-filters">
+                        <h3>Infrastructure Topology Map</h3>
+                    </div>
+                    <div class="hosts-grid" id="hosts-container">
+                        <!-- Dynamic hosts go here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB: Incidents -->
+            <section class="tab-pane" id="tab-incidents">
+                <div class="incidents-layout">
+                    <div class="incidents-card">
+                        <div class="card-header">
+                            <h3>Correlated Incident Timeline</h3>
+                        </div>
+                        <div class="incident-timeline-feed" id="incidents-timeline-feed">
+                            <div class="no-incidents">No security incidents detected. System is running cleanly.</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB: Simulator -->
+            <section class="tab-pane" id="tab-simulator">
+                <div class="simulator-layout">
+                    <div class="simulator-card description-card">
+                        <div class="card-header">
+                            <h3>Attack & Workload Simulator Control Center</h3>
+                        </div>
+                        <div class="card-body">
+                            <p>To demonstrate **SentinelMesh's Autonomous Response Capabilities**, you can launch telemetry simulations. The ML models in the Python engine will detect spikes, and the gRPC server will invoke the mitigation pipeline.</p>
+                            
+                            <div class="console-box">
+                                <h4>How to run the simulator:</h4>
+                                <ol>
+                                    <li>Open a terminal in the folder: <code>c:\Users\bened\Documents\JAVA PROJECT\sentinelmesh-ai</code></li>
+                                    <li>Run the command: <code class="command-highlight">python simulator.py</code></li>
+                                    <li>Select one of the simulated attack modes in the CLI prompt!</li>
+                                </ol>
+                            </div>
+
+                            <div class="simulation-cards">
+                                <div class="sim-mode-card">
+                                    <div class="sim-title">
+                                        <i class="fa-solid fa-network-wired blue"></i>
+                                        <span>Mode 1: Normal Workload</span>
+                                    </div>
+                                    <p>Generates baseline metric patterns across random hosts. Use to see steady state monitoring.</p>
+                                </div>
+                                <div class="sim-mode-card">
+                                    <div class="sim-title">
+                                        <i class="fa-solid fa-shield-virus red"></i>
+                                        <span>Mode 2: Volumetric DDoS</span>
+                                    </div>
+                                    <p>Floods host <strong>server-us-01</strong>. Triggers <strong>MOCK_RATE_LIMIT_IP</strong> mitigation.</p>
+                                </div>
+                                <div class="sim-mode-card">
+                                    <div class="sim-title">
+                                        <i class="fa-solid fa-key orange"></i>
+                                        <span>Mode 3: Authentication Abuse</span>
+                                    </div>
+                                    <p>Floods host <strong>server-ap-01</strong> with failed logins. Triggers <strong>MOCK_BLOCK_IP</strong> mitigation.</p>
+                                </div>
+                                <div class="sim-mode-card">
+                                    <div class="sim-title">
+                                        <i class="fa-solid fa-microchip yellow"></i>
+                                        <span>Mode 4: System Memory Leak</span>
+                                    </div>
+                                    <p>Climbs RAM on <strong>server-eu-02</strong>. Triggers <strong>MOCK_SCALE_UP</strong> mitigation.</p>
+                                </div>
+                                <div class="sim-mode-card">
+                                    <div class="sim-title">
+                                        <i class="fa-solid fa-server purple"></i>
+                                        <span>Mode 5: CPU Saturation</span>
+                                    </div>
+                                    <p>Spikes CPU load on <strong>server-us-03</strong>. Triggers <strong>MOCK_SCALE_UP</strong> mitigation.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Custom Script -->
+    <script src="app.js"></script>
+</body>
+</html>
