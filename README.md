@@ -16,6 +16,10 @@
 
 </div>
 
+<p align="center">
+  <img src="images/dashboard.png" alt="SentinelMesh Dashboard" width="800" />
+</p>
+
 ---
 
 ## Overview
@@ -406,6 +410,10 @@ Open `http://localhost:8082/index.html`
 cd sentinelmesh-ai
 python simulator.py
 ```
+
+<p align="center">
+  <img src="images/terminal.png" alt="SentinelMesh Terminal" width="700" />
+</p>
 
 Available attack scenarios:
 
