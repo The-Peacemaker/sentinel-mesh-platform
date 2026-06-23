@@ -1,10 +1,8 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/The-Peacemaker/sentinel-mesh-platform/master/assets/logo-banner.svg" alt="SentinelMesh Banner" width="800" />
-
 # SentinelMesh Platform
 
-### AI-Powered Autonomous Infrastructure Monitoring & Incident Response
+### Autonomous Infrastructure Monitoring & Incident Response
 
 [![Java](https://img.shields.io/badge/Java-22-ED8B00?logo=openjdk&logoColor=white)](https://openjdk.org/projects/jdk/22/)
 [![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.3.0-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
@@ -20,110 +18,80 @@
 
 ---
 
-> *"What if Datadog, Splunk, and an AI SOC analyst had a baby?"*
+## Overview
 
-**SentinelMesh** is an event-driven, AI-powered autonomous infrastructure monitoring and incident response platform. It continuously ingests infrastructure telemetry, analyzes it in real time using unsupervised machine learning, detects anomalies, correlates events into coherent security incidents, and automatically executes simulated mitigation workflows — all without human intervention.
+SentinelMesh is an event-driven autonomous infrastructure monitoring platform that ingests telemetry streams, detects anomalies using unsupervised machine learning, correlates events into security incidents, and executes simulated mitigation workflows in real time.
 
-<table>
-<tr>
-<td width="50%">
-
-### Traditional Monitoring
 ```
-Server Fails
-    ↓
-Engineer Gets Alert  ⏱️ ~15min
-    ↓
-Engineer Investigates ⏱️ ~30min
-    ↓
-Engineer Fixes  ⏱️ ~45min
-```
-**MTTR: 90+ minutes**
+Traditional Monitoring:
 
-</td>
-<td width="50%">
+  Server Fails --> Engineer Gets Alert (~15 min) --> Engineer Investigates (~30 min) --> Engineer Fixes (~45 min)
+  Mean Time to Resolution: 90+ minutes
 
-### SentinelMesh
-```
-Telemetry Stream
-    ↓
-AI Detection  ⚡ ~50ms
-    ↓
-Risk Assessment  ⚡ ~10ms
-    ↓
-Auto-Mitigation  ⚡ ~6s
-    ↓
-Incident Timeline  📊 Live
-    ↓
-Human Review  👁️ Post-mortem
-```
-**MTTR: <10 seconds**
+SentinelMesh:
 
-</td>
-</tr>
-</table>
+  Telemetry Stream --> AI Detection (~50 ms) --> Risk Assessment (~10 ms) --> Auto-Mitigation (~6 s) --> Incident Timeline --> Human Review
+  Mean Time to Resolution: under 10 seconds
+```
 
 ---
 
-## 📐 System Architecture
+## Architecture
 
 ```mermaid
 graph TB
-    subgraph Sim["🎮 Telemetry Simulator"]
-        SIM[Python CLI<br/>Attack Scenario Generator]
+    subgraph Simulation["Telemetry Simulator"]
+        SIM["Python CLI<br/>Attack Scenario Generator"]
     end
 
-    subgraph Ingest["⚡ Ingestion Layer"]
-        ING[Spring Boot<br/>Ingestion Service<br/>Port :8081]
-        RL[Redis<br/>Rate Limiter<br/>150 req/min/host]
+    subgraph Ingestion["Ingestion Layer"]
+        ING["Spring Boot<br/>Ingestion Service :8081"]
+        RL["Redis<br/>Rate Limiter"]
     end
 
-    subgraph Bus["🔄 Event Bus"]
-        KAFKA{{Apache Kafka<br/>Port :9092}}
+    subgraph Bus["Event Bus"]
+        KAFKA{{"Apache Kafka :9092"}}
     end
 
-    subgraph AI["🧠 AI Detection Engine"]
-        AIE[Python<br/>Isolation Forest + Rules]
-        GRPC_C[gRPC Client]
+    subgraph AI["Detection Engine"]
+        AIE["Python<br/>Isolation Forest + Rules"]
+        GRPC_C["gRPC Client"]
     end
 
-    subgraph Core["🛡️ Core Backend"]
-        BACK[Spring Boot<br/>Backend Service<br/>Port :8082]
-        GRPC_S[gRPC Server<br/>Port :9090]
-        PG[(PostgreSQL 15<br/>Port :5432)]
+    subgraph Core["Core Backend"]
+        BACK["Spring Boot<br/>Backend Service :8082"]
+        GRPC_S["gRPC Server :9090"]
+        PG[("PostgreSQL 15 :5432")]
     end
 
-    subgraph Present["📊 Presentation"]
-        DASH[Cyberpunk Dashboard<br/>SSE Real-time]
+    subgraph Presentation["Presentation"]
+        DASH["Dashboard<br/>SSE Real-time"]
     end
 
-    SIM -->|"REST POST<br/>/api/v1/telemetry"| ING
+    SIM -->|"REST POST"| ING
     ING --> RL
-    ING -->|"Produce<br/>telemetry.raw"| KAFKA
+    ING -->|"Produce"| KAFKA
     KAFKA -->|"Consume"| AIE
     KAFKA -->|"Consume"| BACK
     AIE --> GRPC_C
     GRPC_C -->|"ReportAnomaly"| GRPC_S
     GRPC_S --> BACK
     BACK --> PG
-    BACK -->|"SSE Stream<br/>/api/v1/events"| DASH
+    BACK -->|"SSE Stream"| DASH
 
     style KAFKA fill:#231F20,color:#fff
     style PG fill:#4169E1,color:#fff
     style DASH fill:#6C1D5A,color:#fff
 ```
 
+### Kafka Topic Topology
+
 ```mermaid
 graph LR
-    subgraph Kafka Topics
-        A[telemetry.raw<br/>Partitions: 3] --> B[telemetry.analyzed<br/>Partitions: 3]
-        B --> C[incidents<br/>Partitions: 1]
-        C --> D[mitigation.actions<br/>Partitions: 1]
-    end
-
-    subgraph Audit
-        E[audit.logs<br/>Partitions: 1]
-    end
+    A["telemetry.raw<br/>3 partitions"] --> B["telemetry.analyzed<br/>3 partitions"]
+    B --> C["incidents<br/>1 partition"]
+    C --> D["mitigation.actions<br/>1 partition"]
+    E["audit.logs<br/>1 partition"]
 
     style A fill:#8257e5,color:#fff
     style C fill:#ff1744,color:#fff
@@ -132,62 +100,57 @@ graph LR
 
 ---
 
-## 🧬 The AI Brain
-
-### Anomaly Detection Pipeline
+## Anomaly Detection Pipeline
 
 ```mermaid
 flowchart LR
-    T[Telemetry Event] --> FV[Feature Vector<br/>5-dim]
-    FV --> IF{Isolation Forest}
-    FV --> RB{Rule Engine}
-    IF --> RS1[Decision Score]
-    RB --> RS2[Rule Score]
-    RS1 --> AGG[max⁡]
+    T["Telemetry Event"] --> FV["Feature Vector (5-dim)"]
+    FV --> IF{"Isolation Forest"}
+    FV --> RB{"Rule Engine"}
+    IF --> RS1["Decision Score"]
+    RB --> RS2["Rule Score"]
+    RS1 --> AGG["max"]
     RS2 --> AGG
-    AGG --> TH{Score ≥ 0.70?}
-    TH -->|Yes| GRPC[gRPC Alert → Backend]
-    TH -->|No| DISCARD[Discard]
+    AGG --> TH{"Score >= 0.70?"}
+    TH -->|"Yes"| GRPC["gRPC Alert to Backend"]
+    TH -->|"No"| DISCARD["Discard"]
 ```
 
-### Model: Isolation Forest
+### Isolation Forest Model
 
-The core anomaly detector uses an **unsupervised Isolation Forest** trained on 1,000 synthetic normal telemetry samples across 5 dimensions.
+The core detector uses an unsupervised Isolation Forest trained on 1,000 synthetic normal telemetry samples across 5 dimensions.
 
 $$
-\text{Feature Vector } \mathbf{x} = [\text{CPU}\%, \text{RAM}\%, \text{ResponseTime}, \text{NetworkPkts}, \text{FailedLogins}]
+\text{Feature Vector: } \mathbf{x} = [\text{CPU\%}, \text{RAM\%}, \text{ResponseTime}, \text{NetworkPkts}, \text{FailedLogins}]
 $$
 
-The Isolation Forest isolates anomalies by building an ensemble of random binary trees:
+Anomalies are isolated by building an ensemble of random binary trees:
 
 $$
 s(\mathbf{x}, n) = 2^{-\frac{\mathbb{E}[h(\mathbf{x})]}{c(n)}}
 $$
 
-Where:
-- $h(\mathbf{x})$ — path length from root to leaf for point $\mathbf{x}$
-- $c(n)$ — average path length of unsuccessful search in BST
-- $s(\mathbf{x}, n) \to 1 \implies$ **Anomaly**, $s(\mathbf{x}, n) \to 0 \implies$ **Normal**
+Where `h(x)` is the path length from root to leaf for point `x`, and `c(n)` is the average path length of an unsuccessful search in a BST. Scores approaching 1 indicate anomalies; scores approaching 0 indicate normal observations.
 
-**Decision function to Risk Score mapping:**
+**Risk score mapping:**
 
 ```python
-if prediction == -1:  # ML flags anomaly
+if prediction == -1:  # anomaly flagged by ML
     risk_score = min(1.0, max(0.5, 0.5 + (-decision_score * 4)))
-else:  # Normal
+else:  # normal observation
     risk_score = min(0.35, max(0.0, 0.20 - decision_score))
 ```
 
-### 🧠 Rule-Based Expert System Overlay
+### Rule-Based Expert Overlay
 
-Augmenting the ML with deterministic security rules provides **explainable alerts**:
+Deterministic security rules provide explainable alerts atop the ML model:
 
-| Rule | Condition | Risk Score | Label |
-|------|-----------|-----------|-------|
-| Auth Abuse | `failedLogins ≥ 20` | ≥ 0.90 | `Security Rule: High auth failures` |
-| DDoS Spike | `networkPackets ≥ 15,000` | ≥ 0.95 | `Security Rule: Volume spike` |
-| Resource Exhaustion | `CPU ≥ 90% AND RAM ≥ 90%` | ≥ 0.88 | `Resource Rule: Multi-resource saturation` |
-| Memory Leak | `RAM ≥ 92%` | ≥ 0.78 | `Performance Rule: Memory leak pattern` |
+| Rule | Condition | Minimum Risk | Classification |
+|------|-----------|-------------|----------------|
+| Authentication Abuse | `failedLogins >= 20` | 0.90 | Security Rule: High auth failures |
+| Volumetric DDoS | `networkPackets >= 15000` | 0.95 | Security Rule: Volume spike |
+| Resource Exhaustion | `CPU >= 90% AND RAM >= 90%` | 0.88 | Resource Rule: Multi-resource saturation |
+| Memory Leak | `RAM >= 92%` | 0.78 | Performance Rule: Memory leak pattern |
 
 ```python
 if failed_logins >= 20:
@@ -196,46 +159,40 @@ if failed_logins >= 20:
     rule_triggered = True
 elif network_packets >= 15000:
     risk_score = max(risk_score, 0.95)
-    reason = f"Security Rule: Volume spike ({network_packets} packets/s)"
+    reason = f"Security Rule: Volume spike detected ({network_packets} packets/s)"
 ```
 
 ---
 
-## 🔬 Incident Correlation Engine
+## Incident Correlation Engine
 
-Instead of flooding operators with **100 individual alerts**, SentinelMesh correlates multiple anomalies into **1 coherent incident**:
+Rather than generating one alert per anomaly, SentinelMesh buffers anomalies per host in a 60-second sliding window. When two or more anomalies accumulate, a single correlated incident is created with composite severity scoring.
 
 ```mermaid
 flowchart TD
-    A1[CPU Spike Anomaly<br/>Risk: 0.88] --> CORR
-    A2[Memory Spike Anomaly<br/>Risk: 0.78] --> CORR
-    A3[DB Timeout Anomaly<br/>Risk: 0.85] --> CORR
-    CORR{Correlation Engine} -->|≥ 2 anomalies<br/>in 60s window| INC["🚨 Database Saturation Incident<br/>Severity: CRITICAL"]
-    CORR -->|< 2 anomalies| QUEUE[Queue for next window]
+    A1["CPU Spike<br/>Risk: 0.88"] --> CORR
+    A2["Memory Spike<br/>Risk: 0.78"] --> CORR
+    A3["DB Timeout<br/>Risk: 0.85"] --> CORR
+    CORR{"Correlation Engine"} -->|"2+ anomalies in 60s window"| INC["Database Saturation Incident<br/>Severity: CRITICAL"]
+    CORR -->|"< 2 anomalies"| QUEUE["Queue for next window"]
 ```
-
-### Correlation Algorithm
 
 ```java
 @Transactional
 public void correlateAnomaly(Anomaly newAnomaly) {
-    // 1. Check for existing active incident on host
     Incident activeIncident = incidentRepository
         .findFirstByHostAndStatusOrderByIdDesc(host, "ACTIVE")
         .orElse(null);
 
     if (activeIncident != null) {
-        // Attach to existing incident, re-evaluate severity
         newAnomaly.setIncident(activeIncident);
         return;
     }
 
-    // 2. Fetch unassociated anomalies in last 60 seconds
     List<Anomaly> unassociated = anomalyRepository
         .findByHostAndIncidentIsNullAndTimestampAfter(host, cutoff);
 
     if (unassociated.size() >= 2) {
-        // 3. Create correlated incident
         Incident incident = Incident.builder()
             .incidentUuid(UUID.randomUUID().toString())
             .severity(determineSeverity(unassociated))
@@ -243,8 +200,6 @@ public void correlateAnomaly(Anomaly newAnomaly) {
             .status("ACTIVE")
             .build();
         incidentRepository.save(incident);
-
-        // 4. Trigger autonomous mitigation
         mitigationService.triggerMitigation(incident);
     }
 }
@@ -252,16 +207,16 @@ public void correlateAnomaly(Anomaly newAnomaly) {
 
 ---
 
-## ⚔️ Autonomous Mitigation Engine
+## Autonomous Mitigation Engine
 
-SentinelMesh doesn't just detect — it **acts**. The mitigation engine executes simulated countermeasures based on incident classification:
+The mitigation engine executes simulated countermeasures based on incident classification. Actions run asynchronously via Spring's `@Async` and resolve within approximately 6 seconds.
 
-| Incident Type | Trigger | Mitigation Action | Resolution Time |
-|--------------|---------|-------------------|-----------------|
-| Brute Force | `failedLogins > 50` | `MOCK_BLOCK_IP` — Firewall rule blocks attacking IP | ~6 seconds |
-| DDoS Attack | `networkPackets > 15000` | `MOCK_RATE_LIMIT_IP` — Edge rate limiter throttles floods | ~6 seconds |
-| Resource Exhaustion | `CPU > 95%` | `MOCK_SCALE_UP` — Auto-scaling provisions redundant node | ~6 seconds |
-| Memory Leak | Gradual RAM climb | `MOCK_RESTART_SERVICES` — Graceful service restart | ~6 seconds |
+| Incident Type | Trigger | Mitigation Action | Behavior |
+|--------------|---------|-------------------|----------|
+| Brute Force | `failedLogins > 50` | `MOCK_BLOCK_IP` | Simulated firewall rule blocks attacking IP |
+| DDoS Attack | `networkPackets > 15000` | `MOCK_RATE_LIMIT_IP` | Simulated edge rate limiter throttles floods |
+| Resource Exhaustion | `CPU > 95%` | `MOCK_SCALE_UP` | Simulated auto-scaling provisions redundant node |
+| Memory Leak | Gradual RAM climb | `MOCK_RESTART_SERVICES` | Simulated graceful service restart |
 
 ```java
 @Async
@@ -283,28 +238,28 @@ public CompletableFuture<Void> triggerMitigation(Incident incident) {
         .result("SUCCESS")
         .build();
 
+    mitigationActionRepository.save(action);
     incident.setStatus("RESOLVED");
     incident.setResolvedAt(Instant.now());
     sseBroadcaster.broadcast("incident", incident);
+    return CompletableFuture.completedFuture(null);
 }
 ```
 
 ---
 
-## 🔌 Communication Architecture: gRPC over REST
+## Communication Layer: gRPC
 
-Why **gRPC** instead of REST? Because this project demonstrates **production-grade design decisions**:
+The AI Engine communicates with the Backend via gRPC, chosen for contract-first development, binary Protobuf serialization, and HTTP/2 multiplexing.
 
-| Feature | REST | gRPC |
-|---------|------|------|
+| Property | REST | gRPC |
+|----------|------|------|
 | Protocol | HTTP/1.1 + JSON | HTTP/2 + Protobuf |
-| Serialization | Text (JSON) | Binary (Protobuf) |
-| Contract | Loose (OpenAPI) | Strict (.proto) |
+| Serialization | Text | Binary |
+| Contract | OpenAPI (optional) | `.proto` (mandatory) |
 | Streaming | Limited | Native bidirectional |
-| Throughput | Baseline | **7-10x faster** |
-| Code Generation | Optional | Built-in |
-
-### Protocol Buffer Contract
+| Throughput | Baseline | 7-10x faster |
+| Code Generation | External tools | Built-in |
 
 ```protobuf
 syntax = "proto3";
@@ -334,10 +289,9 @@ message AnomalyResponse {
 
 ---
 
-## 🗄️ PostgreSQL Schema
+## Database Schema
 
 ```sql
--- Core telemetry storage
 CREATE TABLE telemetry_events (
     id BIGSERIAL PRIMARY KEY,
     host VARCHAR(255),
@@ -353,7 +307,6 @@ CREATE TABLE telemetry_events (
     received_at TIMESTAMP
 );
 
--- AI-detected anomalies
 CREATE TABLE anomalies (
     id BIGSERIAL PRIMARY KEY,
     host VARCHAR(255),
@@ -368,7 +321,6 @@ CREATE TABLE anomalies (
     incident_id BIGINT REFERENCES incidents(id)
 );
 
--- Correlated incidents
 CREATE TABLE incidents (
     id BIGSERIAL PRIMARY KEY,
     incident_uuid VARCHAR(36) UNIQUE NOT NULL,
@@ -380,7 +332,6 @@ CREATE TABLE incidents (
     resolved_at TIMESTAMP
 );
 
--- Autonomous mitigation action log
 CREATE TABLE mitigation_actions (
     id BIGSERIAL PRIMARY KEY,
     incident_id BIGINT,
@@ -393,19 +344,18 @@ CREATE TABLE mitigation_actions (
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
-- **Java 22** — JDK for Spring Boot services
-- **Python 3.11+** — ML engine & simulator
-- **Docker** — Infrastructure containers
-- **Maven 3.9+** — Java build tool
+- Java 22
+- Python 3.11+
+- Docker
+- Maven 3.9+
 
 ### 1. Launch Infrastructure
 
 ```bash
-# Start Kafka, PostgreSQL, Redis
 docker run -d --name sentinelmesh-kafka \
   -p 9092:9092 \
   -e KAFKA_NODE_ID=1 \
@@ -427,161 +377,135 @@ docker run -d --name sentinelmesh-redis \
   -p 6379:6379 redis:7-alpine
 ```
 
-### 2. Build & Launch Microservices
+### 2. Build and Launch Services
 
 ```bash
-# Terminal 1 — Ingestion Service (:8081)
+# Terminal 1: Ingestion Service (port 8081)
 cd sentinelmesh-ingestion
 mvn clean package -DskipTests
 java -jar target/ingestion-service-1.0.0.jar
 
-# Terminal 2 — Core Backend (:8082 HTTP, :9090 gRPC)
+# Terminal 2: Core Backend (port 8082, gRPC 9090)
 cd sentinelmesh-backend
 mvn clean package -DskipTests
 java -jar target/backend-service-1.0.0.jar
 
-# Terminal 3 — Python AI Engine
+# Terminal 3: AI Engine
 cd sentinelmesh-ai
 pip install -r requirements.txt
 python ai_engine.py
 ```
 
-### 3. Open the Dashboard
+### 3. Dashboard
 
-Navigate to: **http://localhost:8082/index.html**
+Open `http://localhost:8082/index.html`
 
-### 4. Launch Attack Simulator
+### 4. Simulator
 
 ```bash
 cd sentinelmesh-ai
 python simulator.py
-
-# Select scenario:
-#   1 — Normal Traffic (Baseline)
-#   2 — Volumetric DDoS Attack 🚿
-#   3 — Brute Force Authentication Abuse 🔑
-#   4 — System Memory Leak 💾
-#   5 — Resource Exhaustion (CPU Saturation) 🔥
 ```
 
----
+Available attack scenarios:
 
-## 📊 Real-Time Dashboard
-
-The SentinelMesh dashboard provides 4 operational views:
-
-```mermaid
-graph LR
-    DASH[Dashboard] --> STATS[Live Stats<br/>Events/sec | Anomalies<br/>Incidents | Mitigations]
-    DASH --> CHARTS[Time-Series Charts<br/>CPU/Memory Trends<br/>Risk Score Bars]
-    DASH --> HOSTS[Host Topology Map<br/>Health Status<br/>Per-host Metrics]
-    DASH --> FEED[Incident Timeline<br/>Severity-coded Cards<br/>Mitigation Steps]
-```
-
-- **SSE-powered** real-time updates (no polling)
-- **Chart.js** visualizations with dark cyberpunk theme
-- **FontAwesome + Outfit** typography
-- Color-coded severity indicators (HEALTHY, WARNING, CRITICAL)
+| Mode | Scenario | Target Host | Detection Trigger |
+|------|----------|-------------|-------------------|
+| 1 | Normal Traffic | Random | None |
+| 2 | Volumetric DDoS | `server-us-01` | `networkPackets >= 15000` |
+| 3 | Brute Force Auth | `server-ap-01` | `failedLogins >= 20` |
+| 4 | Memory Leak | `server-eu-02` | RAM climb to 92%+ |
+| 5 | CPU Exhaustion | `server-us-03` | CPU climb to 95%+ |
 
 ---
 
-## 🎯 Simulated Attack Scenarios
-
-| Mode | Target | Signature | Detection | Mitigation |
-|------|--------|-----------|-----------|------------|
-| 1 — Normal | Random | Baseline metrics | None | — |
-| 2 — DDoS | `server-us-01` | `networkPackets ≥ 15,000` | ⚡ Network spike rule | `MOCK_RATE_LIMIT_IP` |
-| 3 — Brute Force | `server-ap-01` | `failedLogins ≥ 20` | ⚡ Auth abuse rule | `MOCK_BLOCK_IP` |
-| 4 — Memory Leak | `server-eu-02` | RAM linear climb → 92%+ | ⚡ Memory leak rule | `MOCK_SCALE_UP` |
-| 5 — CPU Exhaustion | `server-us-03` | CPU linear climb → 95%+ | ⚡ Isolation Forest | `MOCK_SCALE_UP` |
-
----
-
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 sentinel-mesh-platform/
-├── docker-compose.yml              # Infrastructure orchestration
-├── sentinelmesh-ingestion/         # Spring Boot — Ingestion Service (:8081)
-│   ├── pom.xml
-│   └── src/main/java/.../
-│       ├── controller/TelemetryController.java    # REST API
-│       ├── kafka/TelemetryProducer.java           # Kafka publisher
-│       ├── service/RateLimiterService.java        # Redis rate limiter
-│       └── model/TelemetryData.java              # DTO with validation
-├── sentinelmesh-backend/           # Spring Boot — Core Backend (:8082/:9090)
-│   ├── pom.xml
-│   ├── src/main/proto/telemetry.proto            # gRPC contract
-│   └── src/main/java/.../
-│       ├── grpc/AnomalyGrpcService.java          # gRPC server
-│       ├── kafka/TelemetryConsumer.java          # Kafka consumer
-│       ├── service/IncidentCorrelationService.java
-│       ├── service/MitigationService.java        # Auto-remediation
-│       ├── service/SseBroadcaster.java           # SSE streaming
-│       └── controller/SseController.java
-│   └── src/main/resources/static/               # Dashboard SPA
-│       ├── index.html
-│       ├── app.js
-│       └── styles.css
-└── sentinelmesh-ai/                # Python — AI Engine + Simulator
-    ├── ai_engine.py               # Kafka consumer + ML + gRPC client
-    ├── simulator.py               # Attack scenario generator
-    ├── train_model.py             # Isolation Forest training
-    └── isolation_forest.pkl       # Serialized ML model
+|
+|-- sentinelmesh-ingestion/          # Spring Boot Ingestion Service (port 8081)
+|   |-- pom.xml
+|   |-- src/main/java/com/aetherflow/ingestion/
+|       |-- controller/TelemetryController.java      # REST API endpoint
+|       |-- kafka/TelemetryProducer.java             # Kafka publisher
+|       |-- service/RateLimiterService.java          # Redis-based rate limiter
+|       |-- model/TelemetryData.java                 # Validated DTO
+|       |-- config/KafkaConfig.java                 # Topic + producer beans
+|       |-- IngestionApplication.java               # Spring Boot entry point
+|   |-- src/main/resources/application.yml
+|
+|-- sentinelmesh-backend/            # Spring Boot Core Backend (port 8082, gRPC 9090)
+|   |-- pom.xml
+|   |-- src/main/proto/telemetry.proto               # gRPC contract definition
+|   |-- src/main/java/com/aetherflow/backend/
+|       |-- grpc/AnomalyGrpcService.java             # gRPC server implementation
+|       |-- grpc/GrpcServerRunner.java               # gRPC server lifecycle
+|       |-- kafka/TelemetryConsumer.java             # Kafka consumer + JPA persistence
+|       |-- service/IncidentCorrelationService.java  # Sliding-window correlation
+|       |-- service/MitigationService.java           # Async auto-remediation
+|       |-- service/SseBroadcaster.java             # Server-Sent Events broadcast
+|       |-- controller/MetricController.java        # REST metrics API
+|       |-- controller/SseController.java           # SSE stream endpoint
+|       |-- model/TelemetryEvent.java               # JPA entity
+|       |-- model/Anomaly.java                       # JPA entity
+|       |-- model/Incident.java                      # JPA entity
+|       |-- model/MitigationAction.java              # JPA entity
+|       |-- repository/*.java                        # Spring Data JPA repositories
+|       |-- BackendApplication.java                 # Spring Boot entry point
+|   |-- src/main/resources/application.yml
+|   |-- src/main/resources/static/
+|       |-- index.html                               # Dashboard SPA
+|       |-- app.js                                   # SSE client + Chart.js logic
+|       |-- styles.css                               # Dark theme stylesheet
+|
+|-- sentinelmesh-ai/                 # Python AI Engine + Simulator
+|   |-- ai_engine.py                                # Kafka consumer + ML + gRPC client
+|   |-- simulator.py                                # Interactive attack scenario CLI
+|   |-- train_model.py                              # Isolation Forest training script
+|   |-- isolation_forest.pkl                        # Serialized ML model
+|   |-- telemetry_pb2.py                            # Generated Protobuf stubs
+|   |-- telemetry_pb2_grpc.py                        # Generated gRPC stubs
+|   |-- requirements.txt
+|
+|-- docker-compose.yml               # Infrastructure orchestration
+|-- .gitignore
 ```
 
 ---
 
-## 🧪 Test Results
+## Technology Stack
+
+| Layer | Technology | Purpose |
+|-------|-----------|---------|
+| Event Streaming | Apache Kafka 3.7 | Durable partitioned message bus |
+| Ingestion API | Spring Boot 3.3 + Jakarta Validation | REST telemetry endpoint with rate limiting |
+| Rate Limiting | Redis 7 | Per-host request throttling, fail-open |
+| Persistence | PostgreSQL 15 + Spring Data JPA | Telemetry, anomalies, incidents, mitigations |
+| Anomaly Detection | scikit-learn IsolationForest | Unsupervised ML on 5 feature dimensions |
+| Explainable Rules | Python Rule Engine | Deterministic security pattern matching |
+| Service Communication | gRPC 1.60 + Protobuf | Binary serialization, contract-first |
+| Real-time Streaming | Server-Sent Events + Chart.js | Dashboard live updates, zero polling |
+| Containerization | Docker | Infrastructure services |
+
+---
+
+## Test Results
 
 | Metric | Value |
 |--------|-------|
-| Telemetry Events Processed | **350+** |
-| Anomalies Detected | **50+** |
-| Incidents Created & Correlated | **13** |
-| Mitigation Actions Executed | **9+** |
-| Monitored Hosts | **12** across 3 regions |
-| Dashboard SSE Clients | **2 concurrent** |
-| End-to-End Latency | **< 10 seconds** from event → resolution |
-
----
-
-## 🤖 Technical Highlights
-
-| Feature | Technology | Why It Impresses |
-|---------|-----------|-----------------|
-| **Event Streaming** | Apache Kafka | Partitioned, durable message bus — demonstrates distributed systems thinking |
-| **Contract-First API** | gRPC + Protobuf | Binary serialization, 7-10x faster than REST, automatic codegen |
-| **Unsupervised ML** | scikit-learn IsolationForest | Real anomaly detection in ~20 lines of code |
-| **Explainable AI** | Rule Engine Overlay | Every alert has a human-readable reason |
-| **Incident Correlation** | Custom Engine | Groups 100s of alerts into 1 coherent incident |
-| **Auto-Mitigation** | @Async Spring Service | Autonomous countermeasures with simulated execution |
-| **Real-Time Dashboard** | SSE + Chart.js | Live telemetry, zero polling overhead |
-| **Rate Limiting** | Redis Sorted Sets | Per-host request throttling with fail-open fallback |
-| **JPA/Hibernate** | PostgreSQL | Auto-DDL, lazy-loaded incident relationships |
-
----
-
-## 🎓 Interview Discussion Points
-
-When presenting this project in a placement interview, articulate these architectural decisions:
-
-1. **"Why Kafka?"** — Decouples producers from consumers. The Ingestion Service, AI Engine, and Backend consume independently. If the AI engine goes down, telemetry is still stored.
-
-2. **"Why gRPC instead of REST?"** — The AI Engine → Backend communication is machine-to-machine and latency-sensitive. gRPC's HTTP/2 multiplexing and Protobuf binary encoding make it 7-10x faster with strict contract enforcement.
-
-3. **"How does incident correlation work?"** — Instead of generating 1 alert per anomaly, we buffer anomalies per host in a 60-second sliding window. When ≥2 anomalies accumulate, a single correlated incident is created with composite severity scoring.
-
-4. **"What happens if Kafka goes down?"** — The Spring Kafka consumer retries with exponential backoff. Messages are persisted in Kafka's log for 7 days. The AI engine also retries gRPC connections.
-
-5. **"How would you scale this?"** — Horizontally: add more Kafka partitions and consumer instances in the same group. Vertically: tune JVM heap, Kafka page cache, and PostgreSQL connection pool.
+| Telemetry Events Processed | 350+ |
+| Anomalies Detected | 50+ |
+| Incidents Correlated | 13 |
+| Mitigation Actions Executed | 9+ |
+| Monitored Hosts | 12 across 3 regions |
+| Concurrent SSE Clients | 2 |
+| End-to-End Resolution Latency | under 10 seconds |
 
 ---
 
 <div align="center">
 
 ### Built by [Benedict CM](https://github.com/The-Peacemaker)
-
-*"The project that separates a college student from a production engineer."*
 
 </div>
