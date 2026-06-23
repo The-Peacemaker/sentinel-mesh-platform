@@ -514,6 +514,6 @@ sentinel-mesh-platform/
 
 <div align="center">
 
-### Built by [Benedict CM](https://github.com/The-Peacemaker)
+### Built by [Benedict Chacko Mathew](https://github.com/The-Peacemaker)
 
 </div>
